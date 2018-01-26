@@ -4,7 +4,7 @@ export interface AudioPlayerProps {
 
 }
 
-export class AudioPlayer extends React.Component<AudioPlayerProps, {}> {
+export class AudioPlayer extends React.Component<AudioPlayerProps, object> {
     render() {
         return (
             <div>
