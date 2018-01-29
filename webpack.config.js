@@ -1,19 +1,22 @@
+const path = require('path');
+
 module.exports = {
     entry: "./src/index.tsx",
     output: {
         filename: "bundle.js",
-        path: __dirname + "/dist"
+        path: path.resolve(__dirname, 'dist'),
+        publicPath: "/dist/"
     },
 
     // Enable sourcemaps for debugging webpack's output.
-    devtool: "source-map",
+    devtool: "inline-source-map",
     devServer: {
-        // contentBase: './demo',
+        contentBase: "./demo/",
         port: 3000,
         // historyApiFallback: true,
         inline: true,
-        hot: true,
-        publicPath: '/demo/'
+        // hot: true,
+        publicPath: '/dist/'
     },
     resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
@@ -27,7 +30,14 @@ module.exports = {
                 test: /\.tsx?$/,
                 loader: "awesome-typescript-loader"
             },
-
+            {
+                test: /\.scss$/,
+                loader: [
+                    'style-loader',
+                    'css-loader',
+                    'sass-loader'
+                ],
+            },
             // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
             {
                 enforce: "pre",
