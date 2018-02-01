@@ -9,6 +9,8 @@ export interface IPropsBase {
     ContentVerticalAlignment?: VerticalAlignment,
     Width?: number | string,
     Height?: number | string,
+    Border?: string,
+    BorderRadius?: number | string,
 }
 
 export class IStateBase {
@@ -21,6 +23,8 @@ export class BaseComponent<T extends IPropsBase, K extends IStateBase> extends R
         ContentVerticalAlignment: VerticalAlignment.Middle,
         Width: '100%',
         Height: '100%',
+        Border: 'solid 1px black',
+        BorderRadius: 6,
     }
     constructor(props: T) {
         super(props);

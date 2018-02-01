@@ -338,6 +338,8 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         ContentVerticalAlignment: VerticalAlignment.Middle,
         Width: '100%',
         Height: '66px',
+        Border: 'solid 1px black',
+        BorderRadius: 6,
         IsAutoPlay: true,
         IsPause: true,
         IsMute: true,
@@ -1002,7 +1004,8 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         height: this.props.Height,
                         justifyContent: super.CalculateHorizontalAlignment(),
                         alignItems: super.CalculateVerticalAlignment(),
-                        marginTop: 400,
+                        border: this.props.Border,
+                        borderRadius: this.props.BorderRadius,
                     }}>
 
                     {/* 封面 */}
