@@ -19,6 +19,8 @@
     .progress-audioinfomation-wrapper {
         flex-grow: 1;
         height: 66px;
+        padding-left: 10px;
+        padding-right: 10px;
         .audio-information-wrapper {
             width: 100%;
             height: 40px;
@@ -28,10 +30,32 @@
             align-items: stretch;
             .title-artists-wrapper {
                 padding-top: 5px;
+                overflow: hidden;
+                max-width: 200px;
             }
-            .inline-lyric-wrapper {}
+            .inline-lyric-wrapper {
+                overflow: hidden;
+                flex-grow: 1;
+            }
             .currenttime-duration-wrapper {
                 padding-top: 5px;
+                overflow: hidden;
+                min-width: 95px;
+            }
+        }
+        .play-progress-wrapper {
+            display: flex;
+            display: -webkit-flex;
+            justify-content: flex-start;
+            align-items: center;
+            .progress-wrapper {
+                flex-grow: 1;
+            }
+            .operation-phone-button-wrapper {
+                display: flex;
+                display: -webkit-flex;
+                justify-content: center;
+                align-items: center;
             }
         }
     }
@@ -44,6 +68,7 @@
     min-height: 30px;
     padding-top: 5px;
     padding-bottom: 5px;
+    overflow-x: hidden;
     .playlist-item-wrapper:hover {
         background-color: rgb(243, 241, 241);
     }

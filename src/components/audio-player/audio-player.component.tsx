@@ -128,6 +128,13 @@ interface AudioPlayerProps extends IPropsBase {
      */
     PlayMode?: PlayMode;
     /**
+     * 設備類型
+     * 
+     * @type {DeviceFamily}
+     * @memberOf AudioPlayerProps
+     */
+    DeviceFamily?: DeviceFamily;
+    /**
      * 歌詞模式
      * 
      * @type {LyricMode}
@@ -347,14 +354,12 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         PlaylistVisibility: true,
         IsCanRemoveItemFromPlaylist: true,
         PlayMode: PlayMode.ListLoop,
+        DeviceFamily: DeviceFamily.PC,
         LyricMode: LyricMode.Inline,
         Playlist: [],
         PlayIndex: 0,
         AudioComparer: (leftAudio: Audio, rightAudio: Audio) => _.isEqual(leftAudio, rightAudio),
         PlaylistComparer: (leftPlaylist: Audio[], rightPlaylist: Audio[]) => _.isEqual(leftPlaylist, rightPlaylist),
-        Play: (playingAudio: Audio, playingAudioIndex: number) => { },
-        Pause: (playingAudio: Audio, playingAudioIndex: number) => { },
-        End: (playingAudio: Audio, nextToPlayAudio: Audio, playingAudioIndex: number, nextToPlayAudioIndex: number) => true,
     }
 
     constructor(props: AudioPlayerProps) {
@@ -487,13 +492,12 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         this.props.AudioChanging && this.props.AudioChanging(this.state.PlayingAudio, audio, this.state.PlayingAudioIndex, index);
 
         this.setState({
+            ParsedLyric: audio.Lyric.length > 0 ? this.ParseLyric(audio.Lyric) : [],
             PlayingAudio: audio,
             PlayingAudioIndex: index,
             LastPlayAudioIndex: this.state.PlayingAudioIndex,
             SkipTimespanIndex: 0,
             CurrentTime: audio.SkipTimespan.length > 0 ? audio.SkipTimespan[0].EnteringTime : 0,
-            IsCanPlay: false,
-            ParsedLyric: audio.Lyric.length > 0 ? this.ParseLyric(audio.Lyric) : [],
         }, () => {
             (this.refs.audio as HTMLAudioElement).currentTime = this.state.CurrentTime;
 
@@ -816,11 +820,14 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
     /**
      * 生成播放模式按钮
      * 
-     * @returns 
+     * @private
+     * @param {React.CSSProperties} [iconStyle={ width: 24, height: 24 }] 
+     * @param {React.CSSProperties} [style={ width: 48, height: 48 }] 
+     * @returns {React.ReactElement<IconButtonProps>} 
      * 
      * @memberOf AudioPlayer
      */
-    private GeneratePlayModeButton(): React.ReactElement<IconButtonProps> {
+    private GeneratePlayModeButton(iconStyle: React.CSSProperties = { width: 24, height: 24 }, style: React.CSSProperties = { width: 48, height: 48 }): React.ReactElement<IconButtonProps> {
         switch (this.state.PlayMode) {
             case PlayMode.SingleLoop:
                 return (
@@ -828,6 +835,8 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         tooltip="单曲循环"
                         touch={true}
                         tooltipPosition="bottom-center"
+                        iconStyle={iconStyle}
+                        style={style}
                         onClick={(event) => {
                             this.setState({
                                 PlayMode: PlayMode.UnorderLoop,
@@ -843,6 +852,8 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         tooltip="列表循环"
                         touch={true}
                         tooltipPosition="bottom-center"
+                        iconStyle={iconStyle}
+                        style={style}
                         onClick={(event) => {
                             this.setState({
                                 PlayMode: PlayMode.SingleLoop,
@@ -858,6 +869,8 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         tooltip="无序播放"
                         touch={true}
                         tooltipPosition="bottom-center"
+                        iconStyle={iconStyle}
+                        style={style}
                         onClick={(event) => {
                             this.setState({
                                 PlayMode: PlayMode.ListLoop,
@@ -871,13 +884,97 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
     }
 
     /**
+     * 生成播放和暫停按鈕
+     * 
+     * @private
+     * @param {React.CSSProperties} [iconStyle={ width: 36, height: 36 }] 
+     * @param {React.CSSProperties} [style={ width: 72, height: 72 }] 
+     * @returns {React.ReactElement<IconButtonProps>} 
+     * 
+     * @memberOf AudioPlayer
+     */
+    private GeneratePlayAndPauseButton(iconStyle: React.CSSProperties = { width: 36, height: 36 }, style: React.CSSProperties = { width: 72, height: 72 }): React.ReactElement<IconButtonProps> {
+        if (this.state.IsPause) {
+            return <IconButton
+                touch={true}
+                disabled={!this.state.IsCanPlay}
+                iconStyle={iconStyle}
+                style={style}
+                onClick={this.PlayButton_Click.bind(this)}
+            >
+                <AVPlayArrow />
+            </IconButton>;
+        }
+
+        return <IconButton
+            touch={true}
+            disabled={!this.state.IsCanPlay}
+            iconStyle={iconStyle}
+            style={style}
+            onClick={this.PauseButton_Click.bind(this)}
+        >
+            <AVPause />
+        </IconButton>;
+    }
+
+
+    /**
+     * 生成下一曲按鈕
+     * 
+     * @private
+     * @param {React.CSSProperties} [iconStyle={ width: 24, height: 24 }] 
+     * @param {React.CSSProperties} [style={ width: 48, height: 48 }] 
+     * @returns {React.ReactElement<IconButtonProps>} 
+     * 
+     * @memberOf AudioPlayer
+     */
+    private GenerateNextButton(iconStyle: React.CSSProperties = { width: 24, height: 24 }, style: React.CSSProperties = { width: 48, height: 48 }): React.ReactElement<IconButtonProps> {
+        return <IconButton
+            touch={true}
+            disabled={!this.state.IsCanPlay}
+            iconStyle={iconStyle}
+            style={style}
+            onClick={this.SkipNextButton_Click.bind(this)}
+        >
+            <AVSkipNext />
+        </IconButton>
+    }
+
+    /**
+     * 生成播放列表按鈕
+     * 
+     * @private
+     * @param {React.CSSProperties} [iconStyle={ width: 24, height: 24 }] 
+     * @param {React.CSSProperties} [style={ width: 48, height: 48 }] 
+     * @returns {React.ReactElement<IconButtonProps>} 
+     * 
+     * @memberOf AudioPlayer
+     */
+    private GeneratePlaylistButton(iconStyle: React.CSSProperties = { width: 24, height: 24 }, style: React.CSSProperties = { width: 48, height: 48 }): React.ReactElement<IconButtonProps> | void {
+        if (this.props.PlaylistVisibility) {
+            return <IconButton
+                disabled={this.state.Playlist.length <= 0}
+                iconStyle={iconStyle}
+                style={style}
+                onClick={() => {
+                    this.setState({
+                        IsPlaylistPopoverOpen: true,
+                    });
+                }}
+            >
+                <AVQueueMusic />
+            </IconButton>
+        }
+    }
+
+    /**
      * 生成音量按钮
      * 
      * @returns {React.ReactElement<IconButtonProps>} 
      * 
      * @memberOf AudioPlayer
      */
-    private GenerateVolumeButton(): React.ReactElement<IconButtonProps> {
+    private GenerateVolumeButton(): React.ReactElement<IconButtonProps> | void {
         if (this.state.Volume <= 0) {
             return (
                 <IconButton
@@ -931,7 +1028,12 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      */
     private GeneratePlaylist(): any {
         return (
-            <div className='playlist-wrapper'>
+            <div className='playlist-wrapper'
+                style={{
+                    width: this.props.DeviceFamily === DeviceFamily.Phone ? document.body.clientWidth : '700px',
+                    fontSize: this.props.DeviceFamily === DeviceFamily.Phone ? 14 : 15
+                }}
+            >
                 {
                     _.map(this.state.Playlist, (playlistItem, index) => {
                         return (
@@ -992,8 +1094,6 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
     }
 
     render() {
-        const currentTime = new DateTime().AddSeconds(this.state.CurrentTime);
-        const duration = new DateTime().AddSeconds(this.state.PlayingAudio.Duration);
         return (
             <MuiThemeProvider>
                 <div
@@ -1006,6 +1106,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         alignItems: super.CalculateVerticalAlignment(),
                         border: this.props.Border,
                         borderRadius: this.props.BorderRadius,
+                        fontSize: this.props.DeviceFamily === DeviceFamily.Phone ? 12 : 15
                     }}>
 
                     {/* 封面 */}
@@ -1013,58 +1114,20 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         <img src={this.state.PlayingAudio.CoverImage} />
                     </div>
 
-                    {/* 播放、暂停、上一首、下一首按钮 */}
-                    <div className='play-pause-button-wrapper'>
-                        <IconButton
-                            touch={true}
-                            disabled={!this.state.IsCanPlay}
-                            onClick={this.SkipPerviousButton_Click.bind(this)}
-                        >
-                            <AVSkipPrevious />
-                        </IconButton>
-                        {
-                            this.state.IsPause && <IconButton
+                    {/* 播放、暂停、上一首、下一首按钮 （非手機模式）*/}
+                    {this.props.DeviceFamily !== DeviceFamily.Phone &&
+                        <div className='play-pause-button-wrapper'>
+                            <IconButton
                                 touch={true}
                                 disabled={!this.state.IsCanPlay}
-                                iconStyle={{
-                                    width: 36,
-                                    height: 36,
-                                }}
-                                style={{
-                                    width: 72,
-                                    height: 72,
-                                }}
-                                onClick={this.PlayButton_Click.bind(this)}
+                                onClick={this.SkipPerviousButton_Click.bind(this)}
                             >
-                                <AVPlayArrow />
+                                <AVSkipPrevious />
                             </IconButton>
-                        }
-
-                        {
-                            !this.state.IsPause && <IconButton
-                                touch={true}
-                                disabled={!this.state.IsCanPlay}
-                                iconStyle={{
-                                    width: 36,
-                                    height: 36,
-                                }}
-                                style={{
-                                    width: 72,
-                                    height: 72,
-                                }}
-                                onClick={this.PauseButton_Click.bind(this)}
-                            >
-                                <AVPause />
-                            </IconButton>
-                        }
-                        <IconButton
-                            touch={true}
-                            disabled={!this.state.IsCanPlay}
-                            onClick={this.SkipNextButton_Click.bind(this)}
-                        >
-                            <AVSkipNext />
-                        </IconButton>
-                    </div>
+                            {this.GeneratePlayAndPauseButton()}
+                            {this.GenerateNextButton()}
+                        </div>
+                    }
 
                     <div className='progress-audioinfomation-wrapper'>
                         <div className='audio-information-wrapper'>
@@ -1095,64 +1158,71 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                 </span>
                             </div>
                         </div>
-                        <Slider
-                            disabled={!this.state.IsCanPlay}
-                            min={0}
-                            max={this.state.PlayingAudio.Duration}
-                            sliderStyle={{
-                                margin: 0,
-                            }}
-                            defaultValue={0}
-                            value={this.state.CurrentTime}
-                            onChange={(event: object, newValue: number) => {
-                                // 由於用戶可能會拖動播放進度條導致多段SkipTimespanIndex不正確，所以需要根據當前播放進度計算SkipTimespanIndex值
-                                if (this.state.PlayingAudio.SkipTimespan.length > 1) {
-                                    const correctSkipTimespan = _.find<SkipTimespan>(this.state.PlayingAudio.SkipTimespan, skipTimespan => newValue >= skipTimespan.EnteringTime && newValue < skipTimespan.EndingTime);
-                                    let correctSkipTimespanIndex = 0;
-                                    let correctCurrentTime = this.state.PlayingAudio.SkipTimespan[0].EnteringTime;
-                                    if (correctSkipTimespan) {
-                                        correctSkipTimespanIndex = this.state.PlayingAudio.SkipTimespan.indexOf(correctSkipTimespan);
-                                        correctCurrentTime = correctSkipTimespan.EnteringTime;
-                                    }
-                                    this.setState({
-                                        SkipTimespanIndex: correctSkipTimespanIndex,
-                                        CurrentTime: correctCurrentTime,
-                                    }, () => {
-                                        (this.refs.audio as HTMLAudioElement).currentTime = this.state.CurrentTime;
-                                    });
-                                    return;
-                                }
+                        <div className='play-progress-wrapper'>
+                            <div className='progress-wrapper'>
+                                <Slider
+                                    disabled={!this.state.IsCanPlay}
+                                    min={0}
+                                    max={this.state.PlayingAudio.Duration}
+                                    sliderStyle={{
+                                        margin: 0,
+                                    }}
+                                    defaultValue={0}
+                                    value={this.state.CurrentTime}
+                                    onChange={(event: object, newValue: number) => {
+                                        // 由於用戶可能會拖動播放進度條導致多段SkipTimespanIndex不正確，所以需要根據當前播放進度計算SkipTimespanIndex值
+                                        if (this.state.PlayingAudio.SkipTimespan.length > 1) {
+                                            const correctSkipTimespan = _.find<SkipTimespan>(this.state.PlayingAudio.SkipTimespan, skipTimespan => newValue >= skipTimespan.EnteringTime && newValue < skipTimespan.EndingTime);
+                                            let correctSkipTimespanIndex = 0;
+                                            let correctCurrentTime = this.state.PlayingAudio.SkipTimespan[0].EnteringTime;
+                                            if (correctSkipTimespan) {
+                                                correctSkipTimespanIndex = this.state.PlayingAudio.SkipTimespan.indexOf(correctSkipTimespan);
+                                                correctCurrentTime = correctSkipTimespan.EnteringTime;
+                                            }
+                                            this.setState({
+                                                SkipTimespanIndex: correctSkipTimespanIndex,
+                                                CurrentTime: correctCurrentTime,
+                                            }, () => {
+                                                (this.refs.audio as HTMLAudioElement).currentTime = this.state.CurrentTime;
+                                            });
+                                            return;
+                                        }
 
-                                this.setState({
-                                    CurrentTime: newValue,
-                                }, () => {
-                                    (this.refs.audio as HTMLAudioElement).currentTime = this.state.CurrentTime;
-                                });
-                            }}
-                        />
-                    </div>
-                    <div className='volume-playlist-button-wrapper'>
-                        {
-                            this.GeneratePlayModeButton()
-                        }
+                                        this.setState({
+                                            CurrentTime: newValue,
+                                        }, () => {
+                                            (this.refs.audio as HTMLAudioElement).currentTime = this.state.CurrentTime;
+                                        });
+                                    }}
+                                />
+                            </div>
 
-                        {
-                            this.GenerateVolumeButton()
-                        }
-                        {
-                            this.props.PlaylistVisibility &&
-                            <IconButton
-                                disabled={this.state.Playlist.length <= 0}
-                                onClick={() => {
-                                    this.setState({
-                                        IsPlaylistPopoverOpen: true,
-                                    });
-                                }}
-                            >
-                                <AVQueueMusic />
-                            </IconButton>
-                        }
+                            {this.props.DeviceFamily === DeviceFamily.Phone &&
+                                <div className='operation-phone-button-wrapper'>
+                                    {this.GeneratePlayModeButton({ width: 20, height: 20 }, { width: 24, height: 24, padding: 0 })}
+                                    {this.GenerateNextButton({ width: 24, height: 24 }, { width: 24, height: 24, padding: 0 })}
+                                    {this.GeneratePlayAndPauseButton({ width: 24, height: 24 }, { width: 24, height: 24, padding: 0 })}
+                                    {this.GeneratePlaylistButton({ width: 22, height: 22 }, { width: 24, height: 24, padding: 0 })}
+                                </div>
+                            }
+
+                        </div>
                     </div>
+                    {this.props.DeviceFamily !== DeviceFamily.Phone &&
+                        <div className='volume-playlist-button-wrapper'>
+                            {
+                                this.GeneratePlayModeButton()
+                            }
+
+                            {
+                                this.GenerateVolumeButton()
+                            }
+                            {
+                                this.GeneratePlaylistButton()
+                            }
+                        </div>
+                    }
+
                     {/* HTML5音频播放对象 */}
                     <audio
                         ref='audio'

@@ -12,7 +12,7 @@ export enum DeviceFamily {
     /**
      * 平板
      */
-    Tablet = 1,
+    // Tablet = 1,
     /**
      * 手机
      */

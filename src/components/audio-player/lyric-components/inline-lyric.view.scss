@@ -9,6 +9,7 @@
         transition: all 0.5s ease-out;
         .lyric-text {
             height: 18px;
+            overflow: hidden;
         }
     }
     .lyric-current-wrapper {

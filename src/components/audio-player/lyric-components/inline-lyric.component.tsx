@@ -58,7 +58,7 @@ export class InlineLyric extends BaseComponent<InlineLyricProps, InlineLyricStat
 
     componentWillReceiveProps(nextProps: InlineLyricProps) {
         if (this.props.CurrentTime !== nextProps.CurrentTime) {
-            this.RollingLyric();
+            this.RollingLyric(nextProps.CurrentTime, nextProps.Lyric);
         }
     }
 
@@ -68,12 +68,12 @@ export class InlineLyric extends BaseComponent<InlineLyricProps, InlineLyricStat
      *
      * @memberOf InlineLyric
      */
-    RollingLyric() {
+    RollingLyric(currentTime: number, lyric: Lyric[]) {
         let currentLyricIndex = 0;
-        for (let i = 0; i < this.props.Lyric.length; i++) {
+        for (let i = 0; i < lyric.length; i++) {
             // 当前播放时刻在上一句歌词的时刻和下一句歌词的时刻区间内。就应该显示当前时刻的歌词
-            if (this.props.CurrentTime >= this.props.Lyric[i].Time &&
-                (!this.props.Lyric[i + 1] || this.props.CurrentTime < this.props.Lyric[i + 1].Time)) {
+            if (currentTime >= lyric[i].Time &&
+                (!lyric[i + 1] || currentTime < lyric[i + 1].Time)) {
                 currentLyricIndex = i;
                 break;
             }
