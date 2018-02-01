@@ -11,6 +11,7 @@ import {
 import { DeviceFamily } from '../../common/enums/device-family';
 import { DateTime } from '../../utilities/datetime';
 import * as _ from 'lodash';
+import { InlineLyric } from './lyric-components/inline-lyric.component';
 import { MuiThemeProvider, darkBaseTheme } from 'material-ui/styles';
 import {
     IconButton,
@@ -20,7 +21,7 @@ import {
     Menu,
     MenuItem,
 } from 'material-ui';
-import { Audio } from './models';
+import { Audio, SkipTimespan, Lyric } from './models';
 import './audio-player.component.scss';
 import AVPlayArrow from 'material-ui/svg-icons/av/play-arrow';
 import AVPause from 'material-ui/svg-icons/av/pause';
@@ -33,6 +34,7 @@ import AVVolumeDown from 'material-ui/svg-icons/av/volume-down';
 import AVVolumeMute from 'material-ui/svg-icons/av/volume-mute';
 import AVVolumeUp from 'material-ui/svg-icons/av/volume-up';
 import AVQueueMusic from 'material-ui/svg-icons/av/queue-music';
+import ContentRemove from 'material-ui/svg-icons/content/remove';
 
 /**
  * 播放模式
@@ -53,6 +55,19 @@ export enum PlayMode {
      * 无序循环
      */
     UnorderLoop = 2,
+}
+
+/**
+ * 歌詞模式
+ * 
+ * @export
+ * @enum {number}
+ */
+export enum LyricMode {
+    /**
+     * 行内模式
+     */
+    Inline = 0,
 }
 
 /**
@@ -92,12 +107,33 @@ interface AudioPlayerProps extends IPropsBase {
      */
     Volume?: number;
     /**
+     * 播放列表是否顯示
+     * 
+     * @type {boolean}
+     * @memberOf AudioPlayerProps
+     */
+    PlaylistVisibility?: boolean;
+    /**
+     * 是否允許從Playlist移除音頻
+     * 
+     * @type {boolean}
+     * @memberOf AudioPlayerProps
+     */
+    IsCanRemoveItemFromPlaylist?: boolean;
+    /**
      * 默认播放模式
      * 
      * @type {PlayMode}
      * @memberOf AudioPlayerProps
      */
     PlayMode?: PlayMode;
+    /**
+     * 歌詞模式
+     * 
+     * @type {LyricMode}
+     * @memberOf AudioPlayerProps
+     */
+    LyricMode?: LyricMode;
     /**
      * 播放列表
      * 
@@ -151,7 +187,24 @@ interface AudioPlayerProps extends IPropsBase {
      * @returns {boolean} true，切换音频。false则否
      * @memberOf AudioPlayerProps
      */
-    End?: (playingAudio: Audio, nextToPlayAudio: Audio, playingAudioIndex: number, nextToPlayAudioIndex: number) => boolean;
+    End?: (playingAudio: Audio, nextToPlayAudio: Audio, playingAudioIndex: number, nextToPlayAudioIndex: number) => void;
+    /**
+     * 發生異常事件
+     * 
+     * 
+     * @memberOf AudioPlayerProps
+     */
+    Error?: (message: string) => void;
+    /**
+     * 音頻正切換事件
+     * @param {Audio} playingAudio 正播放音频
+     * @param {Audio} nextToPlayAudio 下一曲音频
+     * @param {number} playingAudioIndex 正播放音频索引
+     * @param {number} nextToPlayAudioIndex 下一曲音频索引
+     * 
+     * @memberOf AudioPlayerProps
+     */
+    AudioChanging?: (playingAudio: Audio, nextToPlayAudio: Audio, playingAudioIndex: number, nextToPlayAudioIndex: number) => void;
 }
 
 /**
@@ -162,7 +215,6 @@ interface AudioPlayerProps extends IPropsBase {
  * @extends {IStateBase}
  */
 interface AudioPlayerState extends IStateBase {
-
     /**
      * 是否暂停
      * 
@@ -237,12 +289,26 @@ interface AudioPlayerState extends IStateBase {
      */
     SkipTimespanIndex: number;
     /**
+     * 轉換后歌詞數組
+     * 
+     * @type {Lyric[]}
+     * @memberOf AudioPlayerState
+     */
+    ParsedLyric: Lyric[],
+    /**
      * Popover是否打开
      * 
      * @type {boolean}
      * @memberOf AudioPlayerState
      */
-    IsOpen: boolean;
+    IsVolumePopoverOpen: boolean;
+    /**
+     * 播放列表是否打開
+     * 
+     * @type {boolean}
+     * @memberOf AudioPlayerState
+     */
+    IsPlaylistPopoverOpen: boolean;
     /**
      * Popover定位HTML元素
      * 
@@ -276,7 +342,10 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         IsPause: true,
         IsMute: true,
         Volume: 100,
+        PlaylistVisibility: true,
+        IsCanRemoveItemFromPlaylist: true,
         PlayMode: PlayMode.ListLoop,
+        LyricMode: LyricMode.Inline,
         Playlist: [],
         PlayIndex: 0,
         AudioComparer: (leftAudio: Audio, rightAudio: Audio) => _.isEqual(leftAudio, rightAudio),
@@ -330,9 +399,17 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
             */
             SkipTimespanIndex: 0,
             /** 
+             * 轉換后數組
+            */
+            ParsedLyric: [],
+            /** 
              * Popover是否打开
             */
-            IsOpen: false,
+            IsVolumePopoverOpen: false,
+            /** 
+             * 播放列表是否展開
+            */
+            IsPlaylistPopoverOpen: false,
             /** 
              * Popover使用的定位元素
             */
@@ -404,12 +481,17 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      * @memberOf AudioPlayer
      */
     private SetAudio(audio: Audio = new Audio(), index: number = -1): void {
+        // 廣播事件
+        this.props.AudioChanging && this.props.AudioChanging(this.state.PlayingAudio, audio, this.state.PlayingAudioIndex, index);
+
         this.setState({
             PlayingAudio: audio,
             PlayingAudioIndex: index,
             LastPlayAudioIndex: this.state.PlayingAudioIndex,
             SkipTimespanIndex: 0,
             CurrentTime: audio.SkipTimespan.length > 0 ? audio.SkipTimespan[0].EnteringTime : 0,
+            IsCanPlay: false,
+            ParsedLyric: audio.Lyric.length > 0 ? this.ParseLyric(audio.Lyric) : [],
         }, () => {
             (this.refs.audio as HTMLAudioElement).currentTime = this.state.CurrentTime;
 
@@ -533,6 +615,24 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         });
     }
 
+
+    /**
+     * 音頻時長變化事件
+     * 
+     * @private
+     * 
+     * @memberOf AudioPlayer
+     */
+    private DurationChange(): void {
+        // 如果音頻對象時長等於實際時長，則不需要更新duration屬性
+        if (this.state.PlayingAudio.Duration === (this.refs.audio as HTMLAudioElement).duration) {
+            return;
+        }
+        this.setState({
+            PlayingAudio: _.merge({}, this.state.PlayingAudio, { Duration: (this.refs.audio as HTMLAudioElement).duration })
+        });
+    }
+
     /**
      * 切换播放或暂停状态
      * 
@@ -627,6 +727,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      * @memberOf AudioPlayer
      */
     private PlayButton_Click(): void {
+        this.props.Play && this.props.Play(this.state.PlayingAudio, this.state.PlayingAudioIndex);
         this.PlayOrPause(false);
     }
 
@@ -638,8 +739,77 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      * @memberOf AudioPlayer
      */
     private PauseButton_Click(): void {
+        this.props.Pause && this.props.Pause(this.state.PlayingAudio, this.state.PlayingAudioIndex);
         this.PlayOrPause(true);
     }
+
+    /**
+     * 格式化時間，如果時為0，則不顯示時
+     * 
+     * @private
+     * @param {number} seconds 
+     * @returns {string} 
+     * 
+     * @memberOf AudioPlayer
+     */
+    private FormatTime(seconds: number): string {
+        const dateTime = new DateTime().AddSeconds(seconds);
+        if (dateTime.GetHour() > 0) {
+            return dateTime.ToString("HH:mm:ss");
+        }
+
+        return dateTime.ToString('mm:ss');
+    }
+
+    /**
+     * 格式化藝術家名字
+     * 
+     * @private
+     * @param {string[]} artists
+     * @returns {string} 
+     * 
+     * @memberOf AudioPlayer
+     */
+    private FormatArtistsName(artists: string[]): string {
+        if (artists.length == 0) {
+            return '';
+        }
+
+        return _.join(artists, '、');
+    }
+
+    /**
+   * 解析歌词
+   *
+   * @param {any} lyric  歌词字符串已\n分割
+   * @returns 解析后的歌词数组
+   *
+   * @memberOf AudioPlayer
+   */
+    private ParseLyric(lyric: string): Lyric[] {
+        const lyricArray = lyric.split('\n');
+        let lrc = [];
+        const lyricLen = lyricArray.length;
+        for (let i = 0; i < lyricLen; i++) {
+            // match lrc time
+            const lrcTimes = lyricArray[i].match(/\[(\d{2}):(\d{2})\.(\d{2,3})]/g);
+            // match lrc text
+            const lrcText = lyricArray[i].replace(/\[(\d{2}):(\d{2})\.(\d{2,3})]/g, '').replace(/^\s+|\s+$/g, '');
+
+            if (lrcTimes != null) {
+                // handle multiple time tag
+                const timeLen = lrcTimes.length;
+                for (let j = 0; j < timeLen; j++) {
+                    const oneTime = /\[(\d{2}):(\d{2})\.(\d{2,3})]/.exec(lrcTimes[j]) || [];
+                    const lrcTime = parseInt(oneTime[1]) * 60 + parseInt(oneTime[2]) + parseInt(oneTime[3]) / ((oneTime[3] + '').length === 2 ? 100 : 1000);
+                    lrc.push(new Lyric(lrcTime, lrcText));
+                }
+            }
+        }
+        // sort by time
+        lrc.sort((a, b) => a.Time - b.Time);
+        return lrc;
+    };
 
     /**
      * 生成播放模式按钮
@@ -648,7 +818,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      * 
      * @memberOf AudioPlayer
      */
-    GeneratePlayModeButton(): React.ReactElement<IconButtonProps> {
+    private GeneratePlayModeButton(): React.ReactElement<IconButtonProps> {
         switch (this.state.PlayMode) {
             case PlayMode.SingleLoop:
                 return (
@@ -705,7 +875,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      * 
      * @memberOf AudioPlayer
      */
-    GenerateVolumeButton(): React.ReactElement<IconButtonProps> {
+    private GenerateVolumeButton(): React.ReactElement<IconButtonProps> {
         if (this.state.Volume <= 0) {
             return (
                 <IconButton
@@ -713,7 +883,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                     onClick={(event) => {
                         this.setState({
                             AnchorElement: event.currentTarget,
-                            IsOpen: true,
+                            IsVolumePopoverOpen: true,
                         });
                     }}
                 >
@@ -727,7 +897,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                     onClick={(event) => {
                         this.setState({
                             AnchorElement: event.currentTarget,
-                            IsOpen: true,
+                            IsVolumePopoverOpen: true,
                         });
                     }}
                 >
@@ -740,7 +910,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                     onClick={(event) => {
                         this.setState({
                             AnchorElement: event.currentTarget,
-                            IsOpen: true,
+                            IsVolumePopoverOpen: true,
                         });
                     }}
                 >
@@ -749,18 +919,90 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         }
     }
 
+    /**
+     * 播放列表
+     * 
+     * @private
+     * @returns {HTMLDivElement} 
+     * 
+     * @memberOf AudioPlayer
+     */
+    private GeneratePlaylist(): any {
+        return (
+            <div className='playlist-wrapper'>
+                {
+                    _.map(this.state.Playlist, (playlistItem, index) => {
+                        return (
+                            <div className='playlist-item-wrapper'
+                                key={index}
+                                onClick={() => {
+                                    if (index === this.state.PlayingAudioIndex) {
+                                        return;
+                                    }
+
+                                    this.SetAudio(playlistItem, index);
+                                }}>
+                                <div className='status-wrapper'>
+                                    {this.state.PlayingAudioIndex === index && <AVPlayArrow />}
+                                </div>
+                                <div className='title-wrapper'
+                                    style={{
+                                        width: '55%',
+                                    }}
+                                >
+                                    <span>
+                                        {playlistItem.Title}
+                                    </span>
+                                </div>
+                                <div className='artist-wrapper'>
+                                    <span>
+                                        {this.FormatArtistsName(playlistItem.Artists)}
+                                    </span>
+                                </div>
+                                <div className='duration-wrapper'>
+                                    <span>
+                                        {this.FormatTime(playlistItem.Duration)}
+                                    </span>
+                                </div>
+                                {this.props.IsCanRemoveItemFromPlaylist &&
+                                    <div className='operation-wrapper'>
+                                        <IconButton
+                                            onClick={() => {
+                                                let clonePlaylist = _.clone(this.state.Playlist);
+                                                clonePlaylist = _.filter(clonePlaylist, (clonePlaylistItem, indexOfClonePlaylistItem) => indexOfClonePlaylistItem !== index)
+                                                this.setState({
+                                                    Playlist: clonePlaylist,
+                                                    PlayingAudioIndex: _.findIndex(clonePlaylist, clonePlaylistItem => this.props.AudioComparer && this.props.AudioComparer(clonePlaylistItem, playlistItem)),
+                                                });
+                                            }}
+                                        >
+                                            <ContentRemove color='red' />
+                                        </IconButton>
+                                    </div>
+                                }
+                            </div>
+                        );
+                    })
+                }
+            </div>
+        );
+
+    }
+
     render() {
         const currentTime = new DateTime().AddSeconds(this.state.CurrentTime);
         const duration = new DateTime().AddSeconds(this.state.PlayingAudio.Duration);
         return (
             <MuiThemeProvider>
-                <div className='audio-palyer-wrapper'
+                <div
+                    ref='wrapper'
+                    className='audio-palyer-wrapper'
                     style={{
                         width: this.props.Width,
                         height: this.props.Height,
                         justifyContent: super.CalculateHorizontalAlignment(),
                         alignItems: super.CalculateVerticalAlignment(),
-                        display: 'flex' && '-webkit-flex'
+                        marginTop: 400,
                     }}>
 
                     {/* 封面 */}
@@ -825,17 +1067,19 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         <div className='audio-information-wrapper'>
                             <div className='title-artists-wrapper'>
                                 <span>{this.state.PlayingAudio.Title}</span>
+                                <span>-</span>
+                                <span>{this.FormatArtistsName(this.state.PlayingAudio.Artists)}</span>
                             </div>
                             <div className='inline-lyric-wrapper'>
-
+                                {this.props.LyricMode === LyricMode.Inline &&
+                                    <InlineLyric
+                                        CurrentTime={this.state.CurrentTime}
+                                        Lyric={this.state.ParsedLyric}
+                                    />}
                             </div>
                             <div className='currenttime-duration-wrapper'>
                                 <span>
-                                    {
-                                        currentTime.GetHour() <= 0 ?
-                                            currentTime.ToString('mm:ss') :
-                                            currentTime.ToString('HH:mm:ss')
-                                    }
+                                    {this.FormatTime(this.state.CurrentTime)}
                                 </span>
                                 <span style={{
                                     marginLeft: 5,
@@ -844,11 +1088,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                     /
                                 </span>
                                 <span>
-                                    {
-                                        duration.GetHour() <= 0 ?
-                                            duration.ToString('mm:ss') :
-                                            duration.ToString('HH:mm:ss')
-                                    }
+                                    {this.FormatTime(this.state.PlayingAudio.Duration)}
                                 </span>
                             </div>
                         </div>
@@ -862,6 +1102,24 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                             defaultValue={0}
                             value={this.state.CurrentTime}
                             onChange={(event: object, newValue: number) => {
+                                // 由於用戶可能會拖動播放進度條導致多段SkipTimespanIndex不正確，所以需要根據當前播放進度計算SkipTimespanIndex值
+                                if (this.state.PlayingAudio.SkipTimespan.length > 1) {
+                                    const correctSkipTimespan = _.find<SkipTimespan>(this.state.PlayingAudio.SkipTimespan, skipTimespan => newValue >= skipTimespan.EnteringTime && newValue < skipTimespan.EndingTime);
+                                    let correctSkipTimespanIndex = 0;
+                                    let correctCurrentTime = this.state.PlayingAudio.SkipTimespan[0].EnteringTime;
+                                    if (correctSkipTimespan) {
+                                        correctSkipTimespanIndex = this.state.PlayingAudio.SkipTimespan.indexOf(correctSkipTimespan);
+                                        correctCurrentTime = correctSkipTimespan.EnteringTime;
+                                    }
+                                    this.setState({
+                                        SkipTimespanIndex: correctSkipTimespanIndex,
+                                        CurrentTime: correctCurrentTime,
+                                    }, () => {
+                                        (this.refs.audio as HTMLAudioElement).currentTime = this.state.CurrentTime;
+                                    });
+                                    return;
+                                }
+
                                 this.setState({
                                     CurrentTime: newValue,
                                 }, () => {
@@ -878,11 +1136,19 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         {
                             this.GenerateVolumeButton()
                         }
-                        <IconButton
-                            disabled={this.state.Playlist.length <= 0}
-                        >
-                            <AVQueueMusic />
-                        </IconButton>
+                        {
+                            this.props.PlaylistVisibility &&
+                            <IconButton
+                                disabled={this.state.Playlist.length <= 0}
+                                onClick={() => {
+                                    this.setState({
+                                        IsPlaylistPopoverOpen: true,
+                                    });
+                                }}
+                            >
+                                <AVQueueMusic />
+                            </IconButton>
+                        }
                     </div>
                     {/* HTML5音频播放对象 */}
                     <audio
@@ -891,10 +1157,17 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         loop={this.state.PlayMode === PlayMode.SingleLoop}
                         src={this.state.PlayingAudio.Url}
                         onTimeUpdate={this.Playing.bind(this)}
+                        onDurationChange={this.DurationChange.bind(this)}
+                        onError={() => {
+                            this.props.Error && this.props.Error('出錯啦！');
+                        }}
                         onCanPlay={() => {
-                            this.setState({
-                                IsCanPlay: true,
-                            });
+                            this.DurationChange();
+                            if (this.state.IsCanPlay === false) {
+                                this.setState({
+                                    IsCanPlay: true,
+                                });
+                            }
                         }}
                         onEnded={() => {
                             this.End();
@@ -902,14 +1175,14 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                     />
                     {/* 音量控制弹出层 */}
                     <Popover
-                        open={this.state.IsOpen}
+                        open={this.state.IsVolumePopoverOpen}
                         anchorEl={this.state.AnchorElement}
                         anchorOrigin={{ horizontal: 'middle', vertical: 'top' }}
                         targetOrigin={{ horizontal: 'middle', vertical: 'bottom' }}
                         canAutoPosition={true}
                         onRequestClose={() => {
                             this.setState({
-                                IsOpen: false,
+                                IsVolumePopoverOpen: false,
                             });
                         }}>
                         <Slider
@@ -931,6 +1204,21 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                 });
                             }}
                         />
+                    </Popover>
+                    {/* 播放列表彈出層 */}
+                    <Popover
+                        open={this.state.IsPlaylistPopoverOpen}
+                        anchorEl={this.refs.wrapper}
+                        anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
+                        targetOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                        onRequestClose={() => {
+                            this.setState({
+                                IsPlaylistPopoverOpen: false,
+                            });
+                        }}>
+                        {
+                            this.GeneratePlaylist()
+                        }
                     </Popover>
                 </div>
             </MuiThemeProvider >

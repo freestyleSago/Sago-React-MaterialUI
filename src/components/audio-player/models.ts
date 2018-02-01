@@ -81,6 +81,10 @@ export class Audio {
  * @class Lyric
  */
 export class Lyric {
+    constructor(time: number, paragraph: string) {
+        this.Time = time;
+        this.Paragraph = paragraph;
+    }
 
     /**
      * 时刻
