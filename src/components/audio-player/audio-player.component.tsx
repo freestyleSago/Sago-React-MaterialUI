@@ -65,9 +65,13 @@ export enum PlayMode {
  */
 export enum LyricMode {
     /**
+     * 不显示歌词
+     */
+    Hidden = 0,
+    /**
      * 行内模式
      */
-    Inline = 0,
+    Inline = 1,
 }
 
 /**
@@ -113,6 +117,41 @@ interface AudioPlayerProps extends IPropsBase {
      * @memberOf AudioPlayerProps
      */
     PlaylistVisibility?: boolean;
+    /**
+     * 上一曲按钮是否显示
+     * 
+     * @type {boolean}
+     * @memberOf AudioPlayerProps
+     */
+    SkipPerviousButtonVisibility?: boolean;
+    /**
+     * 下一曲按钮是否显示
+     * 
+     * @type {boolean}
+     * @memberOf AudioPlayerProps
+     */
+    SkipNextButtonVisibility?: boolean;
+    /**
+     * 封面图片是否显示
+     * 
+     * @type {boolean}
+     * @memberOf AudioPlayerProps
+     */
+    CoverImageVisibility?: boolean;
+    /**
+     * 音频标题是否显示
+     * 
+     * @type {boolean}
+     * @memberOf AudioPlayerProps
+     */
+    TitleVisibility?: boolean;
+    /**
+     * 音频作者是否显示
+     * 
+     * @type {boolean}
+     * @memberOf AudioPlayerProps
+     */
+    ArtistsVisibility?: boolean;
     /**
      * 是否允許從Playlist移除音頻
      * 
@@ -352,10 +391,15 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         IsMute: true,
         Volume: 100,
         PlaylistVisibility: true,
+        SkipPerviousButtonVisibility: true,
+        SkipNextButtonVisibility: true,
+        CoverImageVisibility: true,
+        TitleVisibility: true,
+        ArtistsVisibility: true,
         IsCanRemoveItemFromPlaylist: true,
         PlayMode: PlayMode.ListLoop,
         DeviceFamily: DeviceFamily.PC,
-        LyricMode: LyricMode.Inline,
+        LyricMode: LyricMode.Hidden,
         Playlist: [],
         PlayIndex: 0,
         AudioComparer: (leftAudio: Audio, rightAudio: Audio) => _.isEqual(leftAudio, rightAudio),
@@ -832,9 +876,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
             case PlayMode.SingleLoop:
                 return (
                     <IconButton
-                        tooltip="单曲循环"
                         touch={true}
-                        tooltipPosition="bottom-center"
                         iconStyle={iconStyle}
                         style={style}
                         onClick={(event) => {
@@ -849,9 +891,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
             case PlayMode.ListLoop:
                 return (
                     <IconButton
-                        tooltip="列表循环"
                         touch={true}
-                        tooltipPosition="bottom-center"
                         iconStyle={iconStyle}
                         style={style}
                         onClick={(event) => {
@@ -866,9 +906,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
             case PlayMode.UnorderLoop:
                 return (
                     <IconButton
-                        tooltip="无序播放"
                         touch={true}
-                        tooltipPosition="bottom-center"
                         iconStyle={iconStyle}
                         style={style}
                         onClick={(event) => {
@@ -884,6 +922,31 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
     }
 
     /**
+     * 生成上一曲按钮
+     * 
+     * @private
+     * @param {React.CSSProperties} [iconStyle={ width: 24, height: 24 }] 
+     * @param {React.CSSProperties} [style={ width: 48, height: 48 }] 
+     * @returns {(React.ReactElement<IconButtonProps> | void)} 
+     * 
+     * @memberOf AudioPlayer
+     */
+    private GenerateSkipPerviousButton(iconStyle: React.CSSProperties = { width: 24, height: 24 }, style: React.CSSProperties = { width: 48, height: 48 }): React.ReactElement<IconButtonProps> | void {
+        if (this.props.SkipPerviousButtonVisibility === false) {
+            return;
+        }
+        return <IconButton
+            touch={true}
+            disabled={!this.state.IsCanPlay}
+            iconStyle={iconStyle}
+            style={style}
+            onClick={this.SkipPerviousButton_Click.bind(this)}
+        >
+            <AVSkipPrevious />
+        </IconButton>;
+    }
+
+    /**
      * 生成播放和暫停按鈕
      * 
      * @private
@@ -893,7 +956,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      * 
      * @memberOf AudioPlayer
      */
-    private GeneratePlayAndPauseButton(iconStyle: React.CSSProperties = { width: 36, height: 36 }, style: React.CSSProperties = { width: 72, height: 72 }): React.ReactElement<IconButtonProps> {
+    private GeneratePlayAndPauseButton(iconStyle: React.CSSProperties = { width: 36, height: 36 }, style: React.CSSProperties = { width: 40, height: 40, padding: 0 }): React.ReactElement<IconButtonProps> {
         if (this.state.IsPause) {
             return <IconButton
                 touch={true}
@@ -917,7 +980,6 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         </IconButton>;
     }
 
-
     /**
      * 生成下一曲按鈕
      * 
@@ -928,7 +990,10 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      * 
      * @memberOf AudioPlayer
      */
-    private GenerateNextButton(iconStyle: React.CSSProperties = { width: 24, height: 24 }, style: React.CSSProperties = { width: 48, height: 48 }): React.ReactElement<IconButtonProps> {
+    private GenerateSkipNextButton(iconStyle: React.CSSProperties = { width: 24, height: 24 }, style: React.CSSProperties = { width: 48, height: 48 }): React.ReactElement<IconButtonProps> | void {
+        if (this.props.SkipNextButtonVisibility === false) {
+            return;
+        }
         return <IconButton
             touch={true}
             disabled={!this.state.IsCanPlay}
@@ -1071,6 +1136,15 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                 {this.props.IsCanRemoveItemFromPlaylist &&
                                     <div className='operation-wrapper'>
                                         <IconButton
+                                            iconStyle={{
+                                                width: 30,
+                                                height: 30,
+                                            }}
+                                            style={{
+                                                width: 30,
+                                                height: 30,
+                                                padding: 5,
+                                            }}
                                             onClick={() => {
                                                 let clonePlaylist = _.clone(this.state.Playlist);
                                                 clonePlaylist = _.filter(clonePlaylist, (clonePlaylistItem, indexOfClonePlaylistItem) => indexOfClonePlaylistItem !== index)
@@ -1110,31 +1184,33 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                     }}>
 
                     {/* 封面 */}
-                    <div className='cover-image-wrapper'>
-                        <img src={this.state.PlayingAudio.CoverImage} />
-                    </div>
+                    {this.props.CoverImageVisibility &&
+                        <div className='cover-image-wrapper'>
+                            <img src={this.state.PlayingAudio.CoverImage} />
+                        </div>
+                    }
 
                     {/* 播放、暂停、上一首、下一首按钮 （非手機模式）*/}
                     {this.props.DeviceFamily !== DeviceFamily.Phone &&
                         <div className='play-pause-button-wrapper'>
-                            <IconButton
-                                touch={true}
-                                disabled={!this.state.IsCanPlay}
-                                onClick={this.SkipPerviousButton_Click.bind(this)}
-                            >
-                                <AVSkipPrevious />
-                            </IconButton>
+                            {this.GenerateSkipPerviousButton()}
                             {this.GeneratePlayAndPauseButton()}
-                            {this.GenerateNextButton()}
+                            {this.GenerateSkipNextButton()}
                         </div>
                     }
 
                     <div className='progress-audioinfomation-wrapper'>
                         <div className='audio-information-wrapper'>
                             <div className='title-artists-wrapper'>
-                                <span>{this.state.PlayingAudio.Title}</span>
-                                <span>-</span>
-                                <span>{this.FormatArtistsName(this.state.PlayingAudio.Artists)}</span>
+                                {
+                                    this.props.TitleVisibility &&
+                                    <span>{this.state.PlayingAudio.Title}</span>
+                                }
+                                <span>{this.state.PlayingAudio.Artists.length > 0 && this.props.TitleVisibility ? '-' : ''}</span>
+                                {
+                                    this.props.ArtistsVisibility &&
+                                    <span>{this.FormatArtistsName(this.state.PlayingAudio.Artists)}</span>
+                                }
                             </div>
                             <div className='inline-lyric-wrapper'>
                                 {this.props.LyricMode === LyricMode.Inline &&
@@ -1200,7 +1276,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                             {this.props.DeviceFamily === DeviceFamily.Phone &&
                                 <div className='operation-phone-button-wrapper'>
                                     {this.GeneratePlayModeButton({ width: 20, height: 20 }, { width: 24, height: 24, padding: 0 })}
-                                    {this.GenerateNextButton({ width: 24, height: 24 }, { width: 24, height: 24, padding: 0 })}
+                                    {this.GenerateSkipNextButton({ width: 24, height: 24 }, { width: 24, height: 24, padding: 0 })}
                                     {this.GeneratePlayAndPauseButton({ width: 24, height: 24 }, { width: 24, height: 24, padding: 0 })}
                                     {this.GeneratePlaylistButton({ width: 22, height: 22 }, { width: 24, height: 24, padding: 0 })}
                                 </div>

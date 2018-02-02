@@ -41,6 +41,7 @@
                 padding-top: 5px;
                 overflow: hidden;
                 min-width: 95px;
+                text-align: right;
             }
         }
         .play-progress-wrapper {
@@ -101,6 +102,7 @@
         .operation-wrapper {
             width: 10%;
             text-align: right;
+            padding-right: 10px;
         }
     }
 }
