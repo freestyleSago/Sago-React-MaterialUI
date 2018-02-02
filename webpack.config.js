@@ -11,7 +11,7 @@ module.exports = {
     // Enable sourcemaps for debugging webpack's output.
     devtool: "inline-source-map",
     devServer: {
-        contentBase: "./demo/",
+        contentBase: "./sample/",
         port: 3000,
         // historyApiFallback: true,
         inline: true,

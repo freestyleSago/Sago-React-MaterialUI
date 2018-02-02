@@ -9,6 +9,13 @@
     "start": "webpack",
     "build": "webpack"
   },
+  "keywords": [
+    "audioplayer",
+    "audio-player",
+    "react-audioplayer",
+    "react-audio-player",
+    "typescript+react"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/freestyleSago/Sago-React-MaterialUI.git"
