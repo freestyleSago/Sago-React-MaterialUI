@@ -8,7 +8,7 @@ export enum DeviceFamily {
     /**
      * PC
      */
-    PC = 0,
+    Desktop = 0,
     /**
      * 平板
      */

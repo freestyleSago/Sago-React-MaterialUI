@@ -81,7 +81,7 @@ export enum LyricMode {
  * @interface AudioPlayerProps
  * @extends {IPropsBase}
  */
-interface AudioPlayerProps extends IPropsBase {
+export interface AudioPlayerProps extends IPropsBase {
     /**
      * 是否自动播放
      * 
@@ -164,6 +164,7 @@ interface AudioPlayerProps extends IPropsBase {
      * 
      * @type {PlayMode}
      * @memberOf AudioPlayerProps
+     *
      */
     PlayMode?: PlayMode;
     /**
@@ -176,7 +177,7 @@ interface AudioPlayerProps extends IPropsBase {
     /**
      * 歌詞模式
      * 
-     * @type {LyricMode}
+     * @type {_LyricMode}
      * @memberOf AudioPlayerProps
      */
     LyricMode?: LyricMode;
@@ -260,7 +261,7 @@ interface AudioPlayerProps extends IPropsBase {
  * @interface AudioPlayerState
  * @extends {IStateBase}
  */
-interface AudioPlayerState extends IStateBase {
+export interface AudioPlayerState extends IStateBase {
     /**
      * 是否暂停
      * 
@@ -373,6 +374,20 @@ interface AudioPlayerState extends IStateBase {
  */
 export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerState>{
     /**
+     * 播放模式
+     * 
+     * @static
+     * @memberof AudioPlayer
+     */
+    public static PlayMode = PlayMode;
+    /**
+     * 歌词模式
+     * 
+     * @static
+     * @memberof AudioPlayer
+     */
+    public static LyricMode = LyricMode;
+    /**
      * 默认的Props
      * 
      * @static
@@ -397,9 +412,9 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         TitleVisibility: true,
         ArtistsVisibility: true,
         IsCanRemoveItemFromPlaylist: true,
-        PlayMode: PlayMode.ListLoop,
-        DeviceFamily: DeviceFamily.PC,
-        LyricMode: LyricMode.Hidden,
+        PlayMode: AudioPlayer.PlayMode.ListLoop,
+        DeviceFamily: DeviceFamily.Desktop,
+        LyricMode: AudioPlayer.LyricMode.Hidden,
         Playlist: [],
         PlayIndex: 0,
         AudioComparer: (leftAudio: Audio, rightAudio: Audio) => _.isEqual(leftAudio, rightAudio),
@@ -873,7 +888,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      */
     private GeneratePlayModeButton(iconStyle: React.CSSProperties = { width: 24, height: 24 }, style: React.CSSProperties = { width: 48, height: 48 }): React.ReactElement<IconButtonProps> {
         switch (this.state.PlayMode) {
-            case PlayMode.SingleLoop:
+            case AudioPlayer.PlayMode.SingleLoop:
                 return (
                     <IconButton
                         touch={true}
@@ -881,14 +896,14 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         style={style}
                         onClick={(event) => {
                             this.setState({
-                                PlayMode: PlayMode.UnorderLoop,
+                                PlayMode: AudioPlayer.PlayMode.UnorderLoop,
                             });
                         }}
                     >
                         <AVRepeatOne />
                     </IconButton >
                 );
-            case PlayMode.ListLoop:
+            case AudioPlayer.PlayMode.ListLoop:
                 return (
                     <IconButton
                         touch={true}
@@ -896,14 +911,14 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         style={style}
                         onClick={(event) => {
                             this.setState({
-                                PlayMode: PlayMode.SingleLoop,
+                                PlayMode: AudioPlayer.PlayMode.SingleLoop,
                             });
                         }}
                     >
                         <AVRepeat />
                     </IconButton>
                 );
-            case PlayMode.UnorderLoop:
+            case AudioPlayer.PlayMode.UnorderLoop:
                 return (
                     <IconButton
                         touch={true}
@@ -911,7 +926,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         style={style}
                         onClick={(event) => {
                             this.setState({
-                                PlayMode: PlayMode.ListLoop,
+                                PlayMode: AudioPlayer.PlayMode.ListLoop,
                             });
                         }}
                     >
@@ -1213,7 +1228,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                 }
                             </div>
                             <div className='inline-lyric-wrapper'>
-                                {this.props.LyricMode === LyricMode.Inline &&
+                                {this.props.LyricMode === AudioPlayer.LyricMode.Inline &&
                                     <InlineLyric
                                         CurrentTime={this.state.CurrentTime}
                                         Lyric={this.state.ParsedLyric}

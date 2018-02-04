@@ -111,6 +111,10 @@ export class Lyric {
  * @class SkipTimespan
  */
 export class SkipTimespan {
+    constructor(enteringTime: number, endingTime: number) {
+        this.EnteringTime = enteringTime;
+        this.EndingTime = endingTime;
+    }
 
     /**
      * 进入时刻

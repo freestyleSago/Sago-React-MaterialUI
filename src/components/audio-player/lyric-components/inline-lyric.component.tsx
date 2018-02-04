@@ -3,7 +3,7 @@ import { BaseComponent, IPropsBase, IStateBase } from '../../base-component';
 import { Lyric } from '../models';
 import './inline-lyric.view.scss';
 
-interface InlineLyricProps extends IPropsBase {
+export interface InlineLyricProps extends IPropsBase {
     /**
      * 當前時間
      * 
@@ -20,7 +20,7 @@ interface InlineLyricProps extends IPropsBase {
     Lyric: Lyric[],
 }
 
-interface InlineLyricState extends IStateBase {
+export interface InlineLyricState extends IStateBase {
     /**
      * 時刻所在歌詞數組索引
      * 

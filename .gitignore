@@ -1,4 +1,3 @@
+.vscode
 node_modules
-dist/components
-dist/index.js
-dist/index.js.map
+dist
