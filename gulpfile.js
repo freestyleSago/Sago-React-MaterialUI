@@ -1,5 +1,6 @@
 var gulp = require('gulp');
 var ts = require("gulp-typescript");
+var merge = require('lodash/merge');
 var sass = require("gulp-sass");
 var tsProject = ts.createProject("tsconfig.json");
 
@@ -7,6 +8,13 @@ gulp.task('tsx', (done) => {
     return tsProject.src()
         .pipe(tsProject())
         .js.pipe(gulp.dest("dist"));
+    done();
+})
+
+gulp.task('dts', (done) => {
+    return tsProject.src()
+        .pipe(tsProject())
+        .dts.pipe(gulp.dest("dist"));
     done();
 })
 
@@ -23,4 +31,4 @@ gulp.task('img', (done) => {
     done();
 })
 
-gulp.task('default', gulp.parallel('tsx', 'css', 'img'), (done) => done())
+gulp.task('default', gulp.series('tsx', 'dts', 'css', 'img'), (done) => done())
