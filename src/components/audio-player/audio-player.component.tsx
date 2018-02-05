@@ -22,7 +22,6 @@ import {
     MenuItem,
 } from 'material-ui';
 import { Audio, SkipTimespan, Lyric } from './models';
-import './audio-player.component.scss';
 import AVPlayArrow from 'material-ui/svg-icons/av/play-arrow';
 import AVPause from 'material-ui/svg-icons/av/pause';
 import AVSkipPrevious from 'material-ui/svg-icons/av/skip-previous';
@@ -1110,14 +1109,28 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
         return (
             <div className='playlist-wrapper'
                 style={{
-                    width: this.props.DeviceFamily === DeviceFamily.Phone ? document.body.clientWidth : '700px',
-                    fontSize: this.props.DeviceFamily === DeviceFamily.Phone ? 14 : 15
+                    width: this.props.DeviceFamily === DeviceFamily.Phone ? document.body.clientWidth : 700,
+                    fontSize: this.props.DeviceFamily === DeviceFamily.Phone ? 14 : 15,
+                    height: '100%',
+                    minHeight: 30,
+                    paddingTop: 5,
+                    paddingBottom: 5,
+                    overflowX: 'hidden',
                 }}
             >
                 {
                     _.map(this.state.Playlist, (playlistItem, index) => {
                         return (
                             <div className='playlist-item-wrapper'
+                                style={{
+                                    WebkitDisplay: 'flex',
+                                    display: '-webkit-flex',
+                                    justifyContent: 'flex-start',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                    paddingTop: 5,
+                                    paddingBottom: 5,
+                                }}
                                 key={index}
                                 onClick={() => {
                                     if (index === this.state.PlayingAudioIndex) {
@@ -1126,7 +1139,14 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
 
                                     this.SetAudio(playlistItem, index);
                                 }}>
-                                <div className='status-wrapper'>
+                                <div className='status-wrapper'
+                                    style={{
+                                        width: '5%',
+                                        display: '-webkit-flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                    }}
+                                >
                                     {this.state.PlayingAudioIndex === index && <AVPlayArrow />}
                                 </div>
                                 <div className='title-wrapper'
@@ -1138,18 +1158,34 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                         {playlistItem.Title}
                                     </span>
                                 </div>
-                                <div className='artist-wrapper'>
+                                <div className='artist-wrapper'
+                                    style={{
+                                        width: '20%',
+                                    }}
+                                >
                                     <span>
                                         {this.FormatArtistsName(playlistItem.Artists)}
                                     </span>
                                 </div>
-                                <div className='duration-wrapper'>
+                                <div className='duration-wrapper'
+                                    style={{
+                                        width: '20%',
+                                        textAlign: 'right',
+                                        marginRight: 15,
+                                    }}
+                                >
                                     <span>
                                         {this.FormatTime(playlistItem.Duration)}
                                     </span>
                                 </div>
                                 {this.props.IsCanRemoveItemFromPlaylist &&
-                                    <div className='operation-wrapper'>
+                                    <div className='operation-wrapper'
+                                        style={{
+                                            width: '10%',
+                                            textAlign: 'right',
+                                            paddingRight: 10,
+                                        }}
+                                    >
                                         <IconButton
                                             iconStyle={{
                                                 width: 30,
@@ -1195,28 +1231,63 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         alignItems: super.CalculateVerticalAlignment(),
                         border: this.props.Border,
                         borderRadius: this.props.BorderRadius,
-                        fontSize: this.props.DeviceFamily === DeviceFamily.Phone ? 12 : 15
+                        fontSize: this.props.DeviceFamily === DeviceFamily.Phone ? 12 : 15,
+                        display: '-webkit-flex',
                     }}>
 
                     {/* 封面 */}
                     {this.props.CoverImageVisibility &&
-                        <div className='cover-image-wrapper'>
-                            <img src={this.state.PlayingAudio.CoverImage} />
+                        <div
+                            className='cover-image-wrapper'
+                            style={{
+                                width: 66,
+                                height: 66,
+                            }}
+                        >
+                            <img src={this.state.PlayingAudio.CoverImage} style={{ width: '100%', height: '100%' }} />
                         </div>
                     }
 
                     {/* 播放、暂停、上一首、下一首按钮 （非手機模式）*/}
                     {this.props.DeviceFamily !== DeviceFamily.Phone &&
-                        <div className='play-pause-button-wrapper'>
+                        <div className='play-pause-button-wrapper'
+                            style={{
+                                height: '100%',
+                                display: '-webkit-flex',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                            }}
+                        >
                             {this.GenerateSkipPerviousButton()}
                             {this.GeneratePlayAndPauseButton()}
                             {this.GenerateSkipNextButton()}
                         </div>
                     }
 
-                    <div className='progress-audioinfomation-wrapper'>
-                        <div className='audio-information-wrapper'>
-                            <div className='title-artists-wrapper'>
+                    <div className='progress-audioinfomation-wrapper'
+                        style={{
+                            flexGrow: 1,
+                            height: 66,
+                            paddingLeft: 10,
+                            paddingRight: 10,
+                        }}
+                    >
+                        <div className='audio-information-wrapper'
+                            style={{
+                                width: '100%',
+                                height: 40,
+                                display: '-webkit-flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'stretch',
+                            }}
+                        >
+                            <div className='title-artists-wrapper'
+                                style={{
+                                    paddingTop: 5,
+                                    overflow: 'hidden',
+                                    maxWidth: 200,
+                                }}
+                            >
                                 {
                                     this.props.TitleVisibility &&
                                     <span>{this.state.PlayingAudio.Title}</span>
@@ -1227,14 +1298,26 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                     <span>{this.FormatArtistsName(this.state.PlayingAudio.Artists)}</span>
                                 }
                             </div>
-                            <div className='inline-lyric-wrapper'>
+                            <div className='inline-lyric-wrapper'
+                                style={{
+                                    overflow: 'hidden',
+                                    flexGrow: 1,
+                                }}
+                            >
                                 {this.props.LyricMode === AudioPlayer.LyricMode.Inline &&
                                     <InlineLyric
                                         CurrentTime={this.state.CurrentTime}
                                         Lyric={this.state.ParsedLyric}
                                     />}
                             </div>
-                            <div className='currenttime-duration-wrapper'>
+                            <div className='currenttime-duration-wrapper'
+                                style={{
+                                    paddingTop: 5,
+                                    overflow: 'hidden',
+                                    minWidth: 95,
+                                    textAlign: 'right',
+                                }}
+                            >
                                 <span>
                                     {this.FormatTime(this.state.CurrentTime)}
                                 </span>
@@ -1249,8 +1332,18 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                 </span>
                             </div>
                         </div>
-                        <div className='play-progress-wrapper'>
-                            <div className='progress-wrapper'>
+                        <div className='play-progress-wrapper'
+                            style={{
+                                display: '-webkit-flex',
+                                justifyContent: 'flex-start',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <div className='progress-wrapper'
+                                style={{
+                                    flexGrow: 1,
+                                }}
+                            >
                                 <Slider
                                     disabled={!this.state.IsCanPlay}
                                     min={0}
@@ -1289,7 +1382,13 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                             </div>
 
                             {this.props.DeviceFamily === DeviceFamily.Phone &&
-                                <div className='operation-phone-button-wrapper'>
+                                <div className='operation-phone-button-wrapper'
+                                    style={{
+                                        display: '-webkit-flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                    }}
+                                >
                                     {this.GeneratePlayModeButton({ width: 20, height: 20 }, { width: 24, height: 24, padding: 0 })}
                                     {this.GenerateSkipNextButton({ width: 24, height: 24 }, { width: 24, height: 24, padding: 0 })}
                                     {this.GeneratePlayAndPauseButton({ width: 24, height: 24 }, { width: 24, height: 24, padding: 0 })}

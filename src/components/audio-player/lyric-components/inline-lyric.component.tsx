@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { BaseComponent, IPropsBase, IStateBase } from '../../base-component';
 import { Lyric } from '../models';
-import './inline-lyric.view.scss';
 
 export interface InlineLyricProps extends IPropsBase {
     /**
@@ -87,12 +86,23 @@ export class InlineLyric extends BaseComponent<InlineLyricProps, InlineLyricStat
 
     render() {
         return (
-            <div className='inline-lyric-wrapper'>
+            <div className='inline-lyric-wrapper'
+                style={{
+                    display: 'flex',
+                    WebKitDisplay: '-webkit-flex',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    height: '100%',
+                }}
+            >
                 <div
                     className='lyric-wrapper'
                     style={{
                         WebkitTransform: `translateY(${this.state.TranslateY}px)`,
                         transform: `translateY(${this.state.TranslateY}px)`,
+                        height: 20,
+                        transition: 'all 0.5s ease-out',
+                        WebKittransition: 'all 0.5s ease-out',
                     }}
                 >
                     {
@@ -100,8 +110,11 @@ export class InlineLyric extends BaseComponent<InlineLyricProps, InlineLyricStat
                             return (
                                 <div
                                     className='lyric-text'
-                                    key={index} style={{
+                                    key={index}
+                                    style={{
                                         opacity: this.state.CurrentLyricIndex === index ? 1 : 0.4,
+                                        height: 18,
+                                        overflow: 'hidden',
                                     }}>
                                     {lyric.Paragraph}
                                 </div>

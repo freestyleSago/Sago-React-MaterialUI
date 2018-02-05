@@ -1,4 +1,5 @@
-import * as defaultCoverImage from './default.jpg';
+// import * as defaultCoverImage from './default.jpg';
+// import ImageMusicNote from 'material-ui/svg-icons/image/music-note'
 
 /**
  * 音频模型
@@ -7,7 +8,7 @@ import * as defaultCoverImage from './default.jpg';
  * @class Audio
  */
 export class Audio {
-    constructor(title: string = '暂无歌曲', artists: string[] = ['佚名'], lyric: string = '', coverImage: any = defaultCoverImage, url: string = '', duration: number = 0, skipTimespans: SkipTimespan[] = []) {
+    constructor(title: string = '暂无歌曲', artists: string[] = ['佚名'], lyric: string = '', coverImage: any = '', url: string = '', duration: number = 0, skipTimespans: SkipTimespan[] = []) {
         this.Title = title;
         this.Artists = artists;
         this.Lyric = lyric;
