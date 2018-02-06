@@ -1,6 +1,3 @@
-// import * as defaultCoverImage from './default.jpg';
-// import ImageMusicNote from 'material-ui/svg-icons/image/music-note'
-
 /**
  * 音频模型
  * 

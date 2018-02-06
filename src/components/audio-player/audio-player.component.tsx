@@ -12,28 +12,28 @@ import { DeviceFamily } from '../../common/enums/device-family';
 import { DateTime } from '../../utilities/datetime';
 import * as _ from 'lodash';
 import { InlineLyric } from './lyric-components/inline-lyric.component';
-import { MuiThemeProvider, darkBaseTheme } from 'material-ui/styles';
+import { Audio, SkipTimespan, Lyric } from './models';
+import { MuiThemeProvider } from 'material-ui/styles';
 import {
     IconButton,
-    Slider,
     Popover,
-    IconButtonProps,
     Menu,
     MenuItem,
 } from 'material-ui';
-import { Audio, SkipTimespan, Lyric } from './models';
-import AVPlayArrow from 'material-ui/svg-icons/av/play-arrow';
-import AVPause from 'material-ui/svg-icons/av/pause';
-import AVSkipPrevious from 'material-ui/svg-icons/av/skip-previous';
-import AVSkipNext from 'material-ui/svg-icons/av/skip-next';
-import AVRepeat from 'material-ui/svg-icons/av/repeat';
-import AVRepeatOne from 'material-ui/svg-icons/av/repeat-one';
-import AVShuffle from 'material-ui/svg-icons/av/shuffle';
-import AVVolumeDown from 'material-ui/svg-icons/av/volume-down';
-import AVVolumeMute from 'material-ui/svg-icons/av/volume-mute';
-import AVVolumeUp from 'material-ui/svg-icons/av/volume-up';
-import AVQueueMusic from 'material-ui/svg-icons/av/queue-music';
-import ContentRemove from 'material-ui/svg-icons/content/remove';
+import {
+    PlayArrow,
+    Pause,
+    SkipPrevious,
+    SkipNext,
+    Repeat,
+    RepeatOne,
+    Shuffle,
+    VolumeDown,
+    VolumeMute,
+    VolumeUp,
+    QueueMusic,
+    Remove,
+} from 'material-ui-icons'
 
 /**
  * 播放模式
@@ -899,7 +899,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                             });
                         }}
                     >
-                        <AVRepeatOne />
+                        <RepeatOne />
                     </IconButton >
                 );
             case AudioPlayer.PlayMode.ListLoop:
@@ -914,7 +914,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                             });
                         }}
                     >
-                        <AVRepeat />
+                        <Repeat />
                     </IconButton>
                 );
             case AudioPlayer.PlayMode.UnorderLoop:
@@ -929,7 +929,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                             });
                         }}
                     >
-                        <AVShuffle />
+                        <Shuffle />
                     </IconButton>
                 );
         }
@@ -956,7 +956,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
             style={style}
             onClick={this.SkipPerviousButton_Click.bind(this)}
         >
-            <AVSkipPrevious />
+            <SkipPrevious />
         </IconButton>;
     }
 
@@ -979,7 +979,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                 style={style}
                 onClick={this.PlayButton_Click.bind(this)}
             >
-                <AVPlayArrow />
+                <PlayArrow />
             </IconButton>;
         }
 
@@ -990,7 +990,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
             style={style}
             onClick={this.PauseButton_Click.bind(this)}
         >
-            <AVPause />
+            <Pause />
         </IconButton>;
     }
 
@@ -1015,7 +1015,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
             style={style}
             onClick={this.SkipNextButton_Click.bind(this)}
         >
-            <AVSkipNext />
+            <SkipNext />
         </IconButton>
     }
 
@@ -1041,7 +1041,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                     });
                 }}
             >
-                <AVQueueMusic />
+                <QueueMusic />
             </IconButton>
         }
     }
@@ -1053,11 +1053,10 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
      * 
      * @memberOf AudioPlayer
      */
-    private GenerateVolumeButton(): React.ReactElement<IconButtonProps> | void {
+    private GenerateVolumeButton(): React.ReactElement<any> | void {
         if (this.state.Volume <= 0) {
             return (
                 <IconButton
-                    touch={true}
                     onClick={(event) => {
                         this.setState({
                             AnchorElement: event.currentTarget,
@@ -1065,7 +1064,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         });
                     }}
                 >
-                    <AVVolumeMute />
+                    <VolumeMute />
                 </IconButton>
             );
         } else if (this.state.Volume <= 50) {
@@ -1079,7 +1078,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         });
                     }}
                 >
-                    <AVVolumeDown />
+                    <VolumeDown />
                 </IconButton>);
         } else {
             return (
@@ -1092,7 +1091,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         });
                     }}
                 >
-                    <AVVolumeUp />
+                    <VolumeUp />
                 </IconButton>);
         }
     }
@@ -1147,7 +1146,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                         alignItems: 'center',
                                     }}
                                 >
-                                    {this.state.PlayingAudioIndex === index && <AVPlayArrow />}
+                                    {this.state.PlayingAudioIndex === index && <PlayArrow />}
                                 </div>
                                 <div className='title-wrapper'
                                     style={{
@@ -1205,7 +1204,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                                 });
                                             }}
                                         >
-                                            <ContentRemove color='red' />
+                                            <Remove color='red' />
                                         </IconButton>
                                     </div>
                                 }
@@ -1344,7 +1343,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                     flexGrow: 1,
                                 }}
                             >
-                                <Slider
+                                {/* <Slide
                                     disabled={!this.state.IsCanPlay}
                                     min={0}
                                     max={this.state.PlayingAudio.Duration}
@@ -1378,7 +1377,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                             (this.refs.audio as HTMLAudioElement).currentTime = this.state.CurrentTime;
                                         });
                                     }}
-                                />
+                                />*/}
                             </div>
 
                             {this.props.DeviceFamily === DeviceFamily.Phone &&
@@ -1437,7 +1436,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                         }}
                     />
                     {/* 音量控制弹出层 */}
-                    <Popover
+                    {/* <Popover
                         open={this.state.IsVolumePopoverOpen}
                         anchorEl={this.state.AnchorElement}
                         anchorOrigin={{ horizontal: 'middle', vertical: 'top' }}
@@ -1448,7 +1447,7 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                 IsVolumePopoverOpen: false,
                             });
                         }}>
-                        <Slider
+                      <Slide
                             axis='y'
                             sliderStyle={{
                                 marginLeft: 10,
@@ -1467,14 +1466,14 @@ export class AudioPlayer extends BaseComponent<AudioPlayerProps, AudioPlayerStat
                                 });
                             }}
                         />
-                    </Popover>
+                    </Popover>*/}
                     {/* 播放列表彈出層 */}
                     <Popover
                         open={this.state.IsPlaylistPopoverOpen}
-                        anchorEl={this.refs.wrapper}
+                        anchorEl={this.refs.wrapper as HTMLDivElement}
                         anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
-                        targetOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                        onRequestClose={() => {
+                        transformOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                        onClose={() => {
                             this.setState({
                                 IsPlaylistPopoverOpen: false,
                             });
